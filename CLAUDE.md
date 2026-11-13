@@ -12,7 +12,8 @@ releases, file placement) goes to the user via AskUserQuestion: the recommended 
 ## Decisions (user-confirmed)
 
 - 2026-11-13: Fork on GitHub (`innocentkagina/fm27-trainer`), source in `D:\FM27-Trainer-Windows`.
-- 2026-11-13: Pushing — ask before every push, tag or release to `origin`; never push to `upstream`.
+- 2026-11-13: Pushing — `my-version` may be pushed to `origin` without asking, after each merged change. Ask
+  before any other push (short branches, `main`), and before every tag or release. Never push to `upstream`.
 - 2026-11-13: Dutch comments/identifiers — leave them; new code in English; translate an area only after asking.
 - 2026-11-13: The downloaded upstream `FM27 Trainer.exe` stays in the folder, excluded from git, for comparison.
 - 2026-11-13: Branches — `main` only mirrors `upstream/main` (no own commits). `my-version` is this fork's
@@ -140,7 +141,8 @@ All agent commands: `ping`, `club`, `squad`, `set_finances`, `heal`, `lift_bans`
 - `find_ptr` also finds the module's own buffers: always verify with `u64(a) == target`. Limit 200.
 - FMLibreEditor (github.com/tozmoz/FMLibreEditor) is GPL: use their **facts** (offsets, behaviour), never copy code.
   This project is MIT.
-- Don't push to `origin`, create tags or releases without asking. Never push to `upstream`.
+- Only `my-version` may be pushed to `origin` without asking. Ask before pushing anything else, and before tags or
+  releases. Never push to `upstream`.
 
 ## Offsets (Steam build 26340721)
 
