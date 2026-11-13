@@ -15,6 +15,9 @@ releases, file placement) goes to the user via AskUserQuestion: the recommended 
 - 2026-11-13: Pushing — ask before every push, tag or release to `origin`; never push to `upstream`.
 - 2026-11-13: Dutch comments/identifiers — leave them; new code in English; translate an area only after asking.
 - 2026-11-13: The downloaded upstream `FM27 Trainer.exe` stays in the folder, excluded from git, for comparison.
+- 2026-11-13: Branches — `main` only mirrors `upstream/main` (no own commits). `my-version` is this fork's
+  version. Every change gets a short branch off `my-version`, merged back with `--no-ff`. Upstream updates:
+  update `main` from `upstream`, then merge `main` into `my-version` (ask first).
 - 2026-11-13: Goals for this fork: build it from source, rebrand it, and change/add features (details still to be
   asked).
 
