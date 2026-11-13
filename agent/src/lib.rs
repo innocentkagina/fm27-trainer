@@ -30,7 +30,7 @@ mod server {
 
     fn data_dir() -> PathBuf {
         let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".into());
-        PathBuf::from(home).join("Library/Application Support/FM27 Trainer")
+        PathBuf::from(home).join("Library/Application Support/FM27 Coach")
     }
 
     fn log(msg: &str) {

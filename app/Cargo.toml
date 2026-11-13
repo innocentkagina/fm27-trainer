@@ -1,10 +1,10 @@
 [package]
 name = "fm27-trainer"
-version = "0.2.4"
+version = "0.2.4-coach.1"
 edition = "2024"
 license = "MIT"
-repository = "https://github.com/SemHiel2003/fm27-trainer"
-description = "FM27 Trainer: Tactical Effectiveness, automatic training and live club tools for Football Manager 27"
+repository = "https://github.com/innocentkagina/fm27-trainer"
+description = "FM27 Coach (based on FM27 Trainer): Tactical Effectiveness, automatic training and live club tools for Football Manager 27"
 
 build = "build.rs"
 

@@ -203,7 +203,7 @@ pub fn html_report(title: &str, eff: &Effectiveness, plans: &[WeekPlan]) -> Stri
 
     let uniq = unique_schedules(plans);
     let _ = write!(h, "<h2>{} ({})</h2>", crate::t!("Weekschema's", "Weekly schedules"), uniq.len());
-    h.push_str(crate::t!("<p class=\"note\">Met de module zet FM27 Trainer deze schema's automatisch in je kalender. Zonder module: maak ze aan in FM (Training → Create new schedule).</p>", "<p class=\"note\">With the module, FM27 Trainer writes these schedules into your calendar automatically. Without it: create them in FM (Training → Create new schedule).</p>"));
+    h.push_str(crate::t!("<p class=\"note\">Met de module zet FM27 Coach deze schema's automatisch in je kalender. Zonder module: maak ze aan in FM (Training → Create new schedule).</p>", "<p class=\"note\">With the module, FM27 Coach writes these schedules into your calendar automatically. Without it: create them in FM (Training → Create new schedule).</p>"));
     h.push_str(&legend());
     h.push_str("<div class=\"grid\" style=\"grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))\">");
     for (name, dates, p) in &uniq {
@@ -281,7 +281,7 @@ pub fn csv(plans: &[WeekPlan]) -> String {
 }
 
 pub fn output_dir() -> PathBuf {
-    crate::home().join("Documents").join("FM27 Trainer")
+    crate::home().join("Documents").join("FM27 Coach")
 }
 
 /// Schrijft HTML, CSV en JSON; geeft het pad van de HTML terug.

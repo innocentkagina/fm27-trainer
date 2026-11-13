@@ -967,7 +967,7 @@ dependencies = [
 
 [[package]]
 name = "fm27-agent"
-version = "0.2.4"
+version = "0.2.4-coach.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -976,7 +976,7 @@ dependencies = [
 
 [[package]]
 name = "fm27-trainer"
-version = "0.2.4"
+version = "0.2.4-coach.1"
 dependencies = [
  "anyhow",
  "chrono",
