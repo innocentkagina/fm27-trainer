@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/training-nl.png" alt="Trainingspagina: de komende weken gepland op je zwakste tactische gebieden" width="92%">
+  <img src="docs/images/planning-nl.png" alt="Planningspagina: een week training gepland op je zwakste tactische gebieden" width="92%">
 </p>
 
 ---
