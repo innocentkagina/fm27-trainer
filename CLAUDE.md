@@ -28,6 +28,9 @@ releases, file placement) goes to the user via AskUserQuestion: the recommended 
   logo = the app icon image. Credit in Settings → About: "Based on FM27 Trainer by SemHiel2003 (MIT licence)",
   linked. README and README.nl.md updated; the Mac scripts (`bundle.sh`, `release.sh`) and `AppIcon.icns` still
   carry the old name/icon until a Mac build is needed.
+- 2026-11-13: README top image = Planning page (`docs/images/planning.png`, `planning-nl.png`; taken without FM,
+  demo reading from a scratch `APPDATA`). **To do:** retake `club.png` and `squad.png` (still the old purple look)
+  the next time FM27 is open with a test save.
 - 2026-11-13: Goals for this fork: build it from source, rebrand it, and change/add features (details still to be
   asked).
 

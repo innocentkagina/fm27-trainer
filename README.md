@@ -29,7 +29,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/training.png" alt="Training page: the coming weeks planned on your weakest tactical areas" width="92%">
+  <img src="docs/images/planning.png" alt="Planning page: a week of training planned on your weakest tactical areas" width="92%">
 </p>
 
 ---
