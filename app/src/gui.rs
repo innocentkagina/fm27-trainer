@@ -313,7 +313,7 @@ impl App {
         egui::SidePanel::left("sidebar")
             .exact_width(236.0)
             .resizable(false)
-            .frame(Frame::new().fill(theme::SIDEBAR).inner_margin(Margin { left: 14, right: 14, top: 18, bottom: 14 }).stroke(Stroke::new(1.0, theme::BORDER)))
+            .frame(Frame::new().fill(theme::SIDEBAR).inner_margin(Margin { left: 14, right: 14, top: 18, bottom: 14 }).stroke(Stroke::new(1.0_f32, theme::BORDER)))
             .show(ctx, |ui| {
                 let logo = self
                     .logo
@@ -362,7 +362,7 @@ impl App {
                         self.save_settings();
                     }
                     ui.add_space(10.0);
-                    Frame::new().fill(theme::SURFACE).stroke(Stroke::new(1.0, theme::BORDER)).corner_radius(CornerRadius::same(12)).inner_margin(Margin::same(12)).show(ui, |ui| {
+                    Frame::new().fill(theme::SURFACE).stroke(Stroke::new(1.0_f32, theme::BORDER)).corner_radius(CornerRadius::same(12)).inner_margin(Margin::same(12)).show(ui, |ui| {
                         ui.set_width(ui.available_width());
                         ui.horizontal(|ui| {
                             let (c, txt) = if !agent::LIVE_SUPPORTED {
@@ -388,7 +388,7 @@ impl App {
             return;
         }
         let (c, ic) = if error { (theme::DANGER, icon::WARNING) } else { (theme::INFO, icon::CHECK_CIRCLE) };
-        Frame::new().fill(theme::tint(c, 0.12)).stroke(Stroke::new(1.0, theme::tint(c, 0.4))).corner_radius(CornerRadius::same(10)).inner_margin(Margin::symmetric(12, 8)).show(ui, |ui| {
+        Frame::new().fill(theme::tint(c, 0.12)).stroke(Stroke::new(1.0_f32, theme::tint(c, 0.4))).corner_radius(CornerRadius::same(10)).inner_margin(Margin::symmetric(12, 8)).show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.horizontal_wrapped(|ui| {
                 ui.label(theme::ic(ic).color(c));
@@ -609,7 +609,7 @@ impl App {
         let accent = if auto && connected { theme::SUCCESS } else { theme::WARNING };
         Frame::new()
             .fill(theme::tint(accent, 0.10))
-            .stroke(Stroke::new(1.0, theme::tint(accent, 0.45)))
+            .stroke(Stroke::new(1.0_f32, theme::tint(accent, 0.45)))
             .corner_radius(CornerRadius::same(14))
             .inner_margin(Margin::same(18))
             .show(ui, |ui| {
