@@ -24,9 +24,9 @@ fn home() -> PathBuf {
 /// Instellingen en de socket van de module.
 fn data_dir() -> PathBuf {
     if cfg!(windows) {
-        PathBuf::from(std::env::var("APPDATA").unwrap_or_else(|_| ".".into())).join("FM27 Trainer")
+        PathBuf::from(std::env::var("APPDATA").unwrap_or_else(|_| ".".into())).join("FM27 Coach")
     } else {
-        home().join("Library/Application Support/FM27 Trainer")
+        home().join("Library/Application Support/FM27 Coach")
     }
 }
 

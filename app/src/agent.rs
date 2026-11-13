@@ -198,7 +198,7 @@ pub fn start_fm() -> Result<String> {
     .into())
 }
 
-/// Kopie van de nieuwste save(s) naar ~/Documents/FM27 Trainer/backups.
+/// Kopie van de nieuwste save(s) naar ~/Documents/FM27 Coach/backups.
 pub fn backup_saves() -> Result<PathBuf> {
     let games = crate::fm_user_dir().join("games");
     let mut saves: Vec<(std::time::SystemTime, PathBuf)> = std::fs::read_dir(&games)?

@@ -1,12 +1,16 @@
 <p align="center">
-  <img src="docs/images/icon.png" width="112" height="112" alt="FM27 Trainer-icoon">
+  <img src="docs/images/icon.png" width="112" height="112" alt="FM27 Coach-icoon">
 </p>
 
-<h1 align="center">FM27 Trainer</h1>
+<h1 align="center">FM27 Coach</h1>
 
 <p align="center">
   <strong>Lees je Tactical Effectiveness uit, laat de app je zwakste gebieden trainen<br>
   en beheer je club live, voor Football Manager 27.</strong>
+</p>
+
+<p align="center">
+  <em>FM27 Coach is gebaseerd op <a href="https://github.com/SemHiel2003/fm27-trainer">FM27 Trainer</a> door SemHiel2003 (MIT-licentie).</em>
 </p>
 
 <p align="center">
@@ -24,7 +28,7 @@
 ---
 
 FM27 introduceerde **Tactical Effectiveness**: vier onderdelen (Tactical Understanding, Player Ability, Player
-Buy-In, Next Match Info) en 17 key factors die allemaal omhoog moeten via training en management. FM27 Trainer
+Buy-In, Next Match Info) en 17 key factors die allemaal omhoog moeten via training en management. FM27 Coach
 leest die waarden uit je spel, maakt een trainingsplan dat op je zwakste gebieden mikt, en zet het rechtstreeks
 in FM's trainingskalender, week na week.
 
@@ -57,15 +61,12 @@ in FM's trainingskalender, week na week.
 
 ### macOS
 
-1. Download [FM27-Trainer-macOS.dmg](../../releases/latest/download/FM27-Trainer-macOS.dmg) (altijd de nieuwste versie) en sleep **FM27 Trainer** naar *Apps*.
-2. Eerste start: sta **Schermopname** toe (Systeeminstellingen → Privacy en beveiliging), zodat de app de
-   Breakdown kan uitlezen.
-3. Voor de live-functies: sla op en sluit FM, klik **Start FM met module** (Steam moet open zijn) en laad je
-   save. De app verbindt vanzelf.
+Er is nog geen macOS-versie van FM27 Coach. Gebruik op een Mac de originele
+[FM27 Trainer](https://github.com/SemHiel2003/fm27-trainer).
 
 ### Windows
 
-1. Download [FM27-Trainer-Windows.zip](../../releases/latest/download/FM27-Trainer-Windows.zip) (altijd de nieuwste versie), pak hem uit en start **FM27 Trainer.exe**.
+1. Download [FM27-Coach-Windows.zip](../../releases/latest/download/FM27-Coach-Windows.zip) (altijd de nieuwste versie), pak hem uit en start **FM27 Coach.exe**.
    De exe is nog niet ondertekend: waarschuwt SmartScreen, klik dan op *Meer informatie → Toch uitvoeren*.
 2. Start FM27 zoals altijd (of met *Start FM27* in de app) en laad je save. De app leest `fm.exe` rechtstreeks: er
    hoeft niets geïnstalleerd of meegestart te worden.
@@ -94,14 +95,19 @@ in FM's trainingskalender, week na week.
 
 ## Zelf bouwen
 
-```bash
-./bundle.sh     # ontwikkelversie voor deze Mac
-./release.sh    # universele app, ondertekend met Developer ID, genotariseerd, in een .dmg
+Nodig: Rust (stable, MSVC-toolchain) en de Visual Studio Build Tools ("Desktop development with C++").
+
+```powershell
+cargo test -p fm27-agent -p fm27-trainer       # tests
+cargo run -p fm27-trainer                      # de app starten
+cargo build --release -p fm27-trainer          # target\release\fm27-trainer.exe
 ```
+
+Het interne pakket heet nog `fm27-trainer`; zo blijven updates van het originele project makkelijk over te nemen.
 
 ## Disclaimer
 
-FM27 Trainer is een onafhankelijk fanproject en niet verbonden aan Sports Interactive of SEGA. Football Manager
+FM27 Coach is een onafhankelijk fanproject, gebaseerd op FM27 Trainer door SemHiel2003, en niet verbonden aan Sports Interactive of SEGA. Football Manager
 is een handelsmerk van Sports Interactive / SEGA. Gebruik op eigen risico en bewaar backups van je saves.
 
 ## Licentie

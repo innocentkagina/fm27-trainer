@@ -287,8 +287,8 @@ impl LiveState {
                     let allowed = p.get("untested_writes").and_then(|v| v.as_bool()) == Some(true);
                     if untested && !allowed && snap.message.is_empty() {
                         snap.message = t!(
-                            "Deze FM-versie is nog niet getest met FM27 Trainer: alleen lezen. Controleer of club en selectie kloppen met FM; aanpassen kun je in Instellingen aanzetten.",
-                            "This FM build has not been verified with FM27 Trainer yet: read-only. Check that club and squad match FM; you can allow changes in Settings."
+                            "Deze FM-versie is nog niet getest met FM27 Coach: alleen lezen. Controleer of club en selectie kloppen met FM; aanpassen kun je in Instellingen aanzetten.",
+                            "This FM build has not been verified with FM27 Coach yet: read-only. Check that club and squad match FM; you can allow changes in Settings."
                         )
                         .into();
                         snap.error = true;

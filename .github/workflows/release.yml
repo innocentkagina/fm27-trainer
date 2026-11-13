@@ -78,15 +78,15 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          Copy-Item target/release/fm27-trainer.exe "dist/FM27 Trainer.exe"
-          Compress-Archive -Path "dist/FM27 Trainer.exe" -DestinationPath "dist/FM27-Trainer-Windows.zip" -Force
+          Copy-Item target/release/fm27-trainer.exe "dist/FM27 Coach.exe"
+          Compress-Archive -Path "dist/FM27 Coach.exe" -DestinationPath "dist/FM27-Coach-Windows.zip" -Force
       - uses: actions/upload-artifact@v4
         with:
-          name: FM27-Trainer-Windows
-          path: dist/FM27-Trainer-Windows.zip
+          name: FM27-Coach-Windows
+          path: dist/FM27-Coach-Windows.zip
       - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: dist/FM27-Trainer-Windows.zip
+          files: dist/FM27-Coach-Windows.zip
           # release-notes: docs/releases/<tag>.md (maak dat bestand voor je de tag pusht)
           body_path: docs/releases/${{ github.ref_name }}.md

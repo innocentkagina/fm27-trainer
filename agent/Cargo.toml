@@ -1,9 +1,9 @@
 [package]
 name = "fm27-agent"
-version = "0.2.4"
+version = "0.2.4-coach.1"
 edition = "2024"
 license = "MIT"
-repository = "https://github.com/SemHiel2003/fm27-trainer"
+repository = "https://github.com/innocentkagina/fm27-trainer"
 description = "Leest en schrijft (op verzoek) clubbudget, blessures, moraal en training in FM27: op macOS als module in FM, op Windows van buitenaf"
 
 [lib]

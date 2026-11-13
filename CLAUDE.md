@@ -1,4 +1,4 @@
-# FM27 Trainer: handover for Claude
+# FM27 Coach (fork of FM27 Trainer): handover for Claude
 
 Read this first. This is a fork of SemHiel2003/fm27-trainer (MIT). It summarises what the original author worked out
 and built (macOS and Windows, November 2026), translated from the original Dutch notes and adapted for this fork.
@@ -19,6 +19,15 @@ releases, file placement) goes to the user via AskUserQuestion: the recommended 
 - 2026-11-13: Branches — `main` only mirrors `upstream/main` (no own commits). `my-version` is this fork's
   version. Every change gets a short branch off `my-version`, merged back with `--no-ff`. Upstream updates:
   update `main` from `upstream`, then merge `main` into `my-version` (ask first).
+- 2026-11-13: Rebrand to **FM27 Coach**. Users see the new name (window, sidebar, texts, exe file details,
+  `FM27 Coach.exe` / `FM27-Coach-Windows.zip` in CI); the internal package/binary stays `fm27-trainer` (easier
+  upstream merges). Data folders are separate from the original: `%APPDATA%\FM27 Coach` and
+  `Documents\FM27 Coach` (settings are not carried over). Version scheme `<upstream>-coach.<n>`, starting at
+  `0.2.4-coach.1`. Icon: white whistle on teal (`app/assets/icon/icon.svg`, rendered with `resvg`; `app.ico` holds
+  16–256 px PNGs). Accent colour teal `(14, 143, 136)`, soft `(18, 52, 56)` (same contrast as the old purple). Sidebar
+  logo = the app icon image. Credit in Settings → About: "Based on FM27 Trainer by SemHiel2003 (MIT licence)",
+  linked. README and README.nl.md updated; the Mac scripts (`bundle.sh`, `release.sh`) and `AppIcon.icns` still
+  carry the old name/icon until a Mac build is needed.
 - 2026-11-13: Goals for this fork: build it from source, rebrand it, and change/add features (details still to be
   asked).
 
@@ -331,7 +340,7 @@ FM27 uses fake names for unlicensed clubs: AC Milan = **Casciavit Milano** (UID 
   wider set of 27 right, 0.2.4 got 23). The reporters' actual capture still hasn't been seen: whether this was
   their cause is unconfirmed.
 - Every reading saves `last-capture.png`, `last-analysis.txt` and, if a Breakdown was on screen,
-  `last-breakdown.png` in `%APPDATA%\FM27 Trainer`; replay with `target\debug\fm27-trainer.exe analyze <png> --ocr`
+  `last-breakdown.png` in `%APPDATA%\FM27 Coach`; replay with `target\debug\fm27-trainer.exe analyze <png> --ocr`
   (that output equals `last-analysis.txt`). Pixel-inspection helper scripts (pie_debug.py, montage.py) were not kept;
   recreate with Pillow if needed (`python -m pip install --user pillow`).
 

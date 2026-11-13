@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/images/icon.png" width="112" height="112" alt="FM27 Trainer icon">
+  <img src="docs/images/icon.png" width="112" height="112" alt="FM27 Coach icon">
 </p>
 
-<h1 align="center">FM27 Trainer</h1>
+<h1 align="center">FM27 Coach</h1>
 
 <p align="center">
   <strong>Read your Tactical Effectiveness, let the app train your weakest areas,<br>
@@ -10,11 +10,14 @@
 </p>
 
 <p align="center">
-  <img alt="macOS" src="https://img.shields.io/badge/macOS-13%2B-000?logo=apple">
   <img alt="Windows" src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows">
   <img alt="FM27" src="https://img.shields.io/badge/Football%20Manager-27-c8102e">
   <img alt="Rust" src="https://img.shields.io/badge/built%20with-Rust-dea584?logo=rust">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-7c6cff">
+</p>
+
+<p align="center">
+  <em>FM27 Coach is based on <a href="https://github.com/SemHiel2003/fm27-trainer">FM27 Trainer</a> by SemHiel2003 (MIT licence).</em>
 </p>
 
 <p align="center">
@@ -32,7 +35,7 @@
 ---
 
 FM27 introduced **Tactical Effectiveness**: four areas (Tactical Understanding, Player Ability, Player Buy-In,
-Next Match Info) and 17 key factors that all have to go up through training and management. FM27 Trainer
+Next Match Info) and 17 key factors that all have to go up through training and management. FM27 Coach
 reads those values from your game, works out a training plan aimed at your weakest areas, and writes it
 straight into FM's training calendar, week after week.
 
@@ -79,17 +82,12 @@ Players who have never trained with the team yet are skipped until they have.
 
 ### macOS
 
-1. Download [FM27-Trainer-macOS.dmg](../../releases/latest/download/FM27-Trainer-macOS.dmg) (always the latest version) and drag **FM27 Trainer** to *Applications*.
-2. First launch: allow **Screen Recording** (System Settings → Privacy & Security), so the app can read the Breakdown.
-3. For the live features: save and quit FM, click **Start FM with module** in the app (Steam must be open),
-   then load your save. The app connects by itself.
-
-> FM27 Trainer starts Football Manager itself, with a small module loaded alongside it. Starting FM from Steam
-> works too, but then only reading and planning are available.
+There is no macOS build of FM27 Coach yet. On a Mac, use the original
+[FM27 Trainer](https://github.com/SemHiel2003/fm27-trainer).
 
 ### Windows
 
-1. Download [FM27-Trainer-Windows.zip](../../releases/latest/download/FM27-Trainer-Windows.zip) (always the latest version), unzip it and run **FM27 Trainer.exe**. The
+1. Download [FM27-Coach-Windows.zip](../../releases/latest/download/FM27-Coach-Windows.zip) (always the latest version), unzip it and run **FM27 Coach.exe**. The
    exe is not code-signed yet: if SmartScreen warns, click *More info → Run anyway*.
 2. Start FM27 as usual (or with *Start FM27* in the app) and load your save. The app reads `fm.exe` directly, so
    there is nothing to install and no module to load.
@@ -118,22 +116,22 @@ More detail, including memory layouts and file formats: [docs/TECHNICAL.md](docs
 - **Verified builds only.** The module writes only on FM builds whose layout has been measured and tested. On an
   untested build (after an FM patch, until the new layout has been checked) it is read-only until you allow changes
   in Settings.
-- **Undo** for every change, and **Back up saves** with one click (`~/Documents/FM27 Trainer/backups`).
+- **Undo** for every change, and **Back up saves** with one click (`Documents\FM27 Coach\backups`).
 - Nothing leaves your machine: no account, no telemetry, no network calls.
 
 ## Build from source
 
-Requires Rust (stable) and, on macOS, the Xcode command line tools.
+Requires Rust (stable, MSVC toolchain) and the Visual Studio Build Tools ("Desktop development with C++").
 
-```bash
-./bundle.sh                # dev build: dist/FM27 Trainer.app for this Mac
-./release.sh               # universal app, Developer ID signed, notarised, in a .dmg
-cargo run -p fm27-trainer  # run without bundling
+```powershell
+cargo test -p fm27-agent -p fm27-trainer       # tests
+cargo run -p fm27-trainer                      # run the app
+cargo build --release -p fm27-trainer          # target\release\fm27-trainer.exe
 ```
 
-`release.sh` signs with the first *Developer ID Application* identity in your keychain and notarises when a
-`notarytool` profile named `fm27-notary` exists. The GitHub workflow in `.github/workflows/release.yml` builds
-the macOS DMG and a Windows zip for every `v*` tag.
+The internal package is still called `fm27-trainer`, which keeps merging updates from the original project simple.
+The GitHub workflow in `.github/workflows/release.yml` builds `FM27-Coach-Windows.zip` for every `v*` tag. The
+macOS scripts (`bundle.sh`, `release.sh`) are unchanged from the original and still use the old name.
 
 Project layout: `app/` (the app: egui UI, OCR, planner, live client), `agent/` (the module that runs inside
 FM), `tools/` (scripts for FM's `.fmf` archives and binary JSON), `docs/`.
@@ -152,7 +150,7 @@ Research and memory layouts build on the public work of [FMSuperScout](https://g
 
 ## Disclaimer
 
-FM27 Trainer is an independent fan project. It is not affiliated with, endorsed by or connected to Sports
+FM27 Coach is an independent fan project, based on FM27 Trainer by SemHiel2003. It is not affiliated with, endorsed by or connected to Sports
 Interactive or SEGA. Football Manager is a trademark of Sports Interactive / SEGA. Use it at your own risk and
 keep backups of your saves.
 

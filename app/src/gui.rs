@@ -2,7 +2,7 @@
 
 use anyhow::{Result, anyhow};
 use chrono::{Duration, NaiveDate, Weekday};
-use eframe::egui::{self, Color32, CornerRadius, Frame, Margin, RichText, ScrollArea, Stroke, Ui, vec2};
+use eframe::egui::{self, CornerRadius, Frame, Margin, RichText, ScrollArea, Stroke, Ui, vec2};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::path::PathBuf;
@@ -30,14 +30,14 @@ pub fn run() -> Result<()> {
         .unwrap_or([1320.0, 880.0]);
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("FM27 Trainer")
+            .with_title("FM27 Coach")
             .with_inner_size(size)
             .with_min_inner_size([1040.0, 660.0])
             .with_icon(eframe::icon_data::from_png_bytes(include_bytes!("../assets/icon/icon_256.png")).unwrap_or_default()),
         ..Default::default()
     };
     eframe::run_native(
-        "FM27 Trainer",
+        "FM27 Coach",
         options,
         Box::new(|cc| {
             theme::install(&cc.egui_ctx);
@@ -127,6 +127,8 @@ struct App {
     year: Vec<WeekPlan>,
     live: LiveState,
     frames: u32,
+    /// App icon for the sidebar logo, loaded on first use.
+    logo: Option<egui::TextureHandle>,
 }
 
 impl App {
@@ -183,6 +185,7 @@ impl App {
                 l
             },
             frames: 0,
+            logo: None,
         }
     }
 
@@ -312,13 +315,22 @@ impl App {
             .resizable(false)
             .frame(Frame::new().fill(theme::SIDEBAR).inner_margin(Margin { left: 14, right: 14, top: 18, bottom: 14 }).stroke(Stroke::new(1.0, theme::BORDER)))
             .show(ctx, |ui| {
+                let logo = self
+                    .logo
+                    .get_or_insert_with(|| {
+                        let img = image::load_from_memory(include_bytes!("../assets/icon/icon_256.png")).expect("bundled icon").to_rgba8();
+                        let size = [img.width() as usize, img.height() as usize];
+                        ctx.load_texture("app-logo", egui::ColorImage::from_rgba_unmultiplied(size, img.as_raw()), egui::TextureOptions::LINEAR)
+                    })
+                    .clone();
                 ui.horizontal(|ui| {
-                    Frame::new().fill(theme::ACCENT).corner_radius(CornerRadius::same(10)).inner_margin(Margin::same(7)).show(ui, |ui| {
-                        ui.label(theme::ic(icon::SOCCER_BALL).size(20.0).color(Color32::WHITE));
-                    });
+                    // the icon has transparent padding (100 of 1024 px per side): paint it 4 px larger than the
+                    // 34 px slot so the visible tile fills the slot, without shifting the layout
+                    let (rect, _) = ui.allocate_exact_size(egui::vec2(34.0, 34.0), egui::Sense::hover());
+                    egui::Image::new(&logo).paint_at(ui, rect.expand(4.0));
                     ui.vertical(|ui| {
                         ui.add_space(1.0);
-                        ui.label(RichText::new("FM27 Trainer").font(egui::FontId::new(16.0, theme::bold())).color(theme::TEXT));
+                        ui.label(RichText::new("FM27 Coach").font(egui::FontId::new(16.0, theme::bold())).color(theme::TEXT));
                         ui.label(theme::faint("Tactical Effectiveness"));
                     });
                 });
@@ -568,8 +580,8 @@ impl App {
             ui,
             "Training",
             t!(
-                "FM27 Trainer plant je training op je zwakste gebieden en houdt hem in FM's kalender vast.",
-                "FM27 Trainer plans your training on your weakest areas and keeps it in FM's calendar."
+                "FM27 Coach plant je training op je zwakste gebieden en houdt hem in FM's kalender vast.",
+                "FM27 Coach plans your training on your weakest areas and keeps it in FM's calendar."
             ),
             |ui| {
                 if theme::primary_button(ui, icon::LIGHTNING, t!("Zet training nu in FM", "Apply training now"), can).clicked() {
@@ -620,8 +632,8 @@ impl App {
                             )
                         } else if auto {
                             t!(
-                                "FM's assistent plant elke week de komende 1–2 weken opnieuw in. FM27 Trainer controleert elke 8 seconden en zet afwijkingen terug naar jouw plan. Laat de app open terwijl je speelt.",
-                                "FM's assistant re-plans the next 1–2 weeks every week. FM27 Trainer checks every 8 seconds and puts any change back on your plan. Keep the app open while you play."
+                                "FM's assistent plant elke week de komende 1–2 weken opnieuw in. FM27 Coach controleert elke 8 seconden en zet afwijkingen terug naar jouw plan. Laat de app open terwijl je speelt.",
+                                "FM's assistant re-plans the next 1–2 weeks every week. FM27 Coach checks every 8 seconds and puts any change back on your plan. Keep the app open while you play."
                             )
                         } else {
                             t!(
@@ -1785,8 +1797,8 @@ impl App {
                     ui.label(RichText::new(t!("Aanpassen op een niet-geteste FM-versie", "Allow changes on an untested FM build")).strong());
                 });
                 ui.add(egui::Label::new(theme::dim(t!(
-                    "FM27 Trainer past alleen iets aan op FM-versies die het kent (Steam op Windows en Mac, Game Pass / Xbox-app op Windows). Op andere versies (na een FM-update, of bijvoorbeeld Epic) staat de app op alleen lezen. Kloppen club, budget en selectie in de app met wat FM laat zien? Dan kun je aanpassen hier toestaan. Elke wijziging wordt eerst gecontroleerd, kan ongedaan worden gemaakt en blijft pas bewaard als je in FM opslaat. Maak eerst een backup van je save.",
-                    "FM27 Trainer only changes things on FM builds it knows (Steam on Windows and Mac, Game Pass / Xbox app on Windows). On other builds (after an FM update, or Epic for example) the app is read-only. Do club, budget and squad in the app match what FM shows? Then you can allow changes here. Every change is checked first, can be undone and only sticks once you save in FM. Back up your save first."
+                    "FM27 Coach past alleen iets aan op FM-versies die het kent (Steam op Windows en Mac, Game Pass / Xbox-app op Windows). Op andere versies (na een FM-update, of bijvoorbeeld Epic) staat de app op alleen lezen. Kloppen club, budget en selectie in de app met wat FM laat zien? Dan kun je aanpassen hier toestaan. Elke wijziging wordt eerst gecontroleerd, kan ongedaan worden gemaakt en blijft pas bewaard als je in FM opslaat. Maak eerst een backup van je save.",
+                    "FM27 Coach only changes things on FM builds it knows (Steam on Windows and Mac, Game Pass / Xbox app on Windows). On other builds (after an FM update, or Epic for example) the app is read-only. Do club, budget and squad in the app match what FM shows? Then you can allow changes here. Every change is checked first, can be undone and only sticks once you save in FM. Back up your save first."
                 )))
                 .wrap());
                 if self.live.connected {
@@ -1836,6 +1848,11 @@ impl App {
                 "Session names, limits and presets come from FM27's own game data. The module only reads and writes after checks, with undo. Single-player only. Font: Inter (SIL OFL). Icons: Phosphor (MIT)."
             )))
             .wrap());
+            ui.add_space(4.0);
+            ui.hyperlink_to(
+                t!("Gebaseerd op FM27 Trainer door SemHiel2003 (MIT-licentie)", "Based on FM27 Trainer by SemHiel2003 (MIT licence)"),
+                "https://github.com/SemHiel2003/fm27-trainer",
+            );
         });
         if dirty {
             self.save_settings();
@@ -2010,7 +2027,7 @@ fn plan_grid(ui: &mut Ui, p: &WeekPlan) {
 fn legend(ui: &mut Ui) {
     use crate::model::Category::*;
     ui.horizontal_wrapped(|ui| {
-        ui.label(theme::faint(t!("Omlijnd = door FM27 Trainer gezet · doorgestreept = wat FM wilde ·", "Outlined = set by FM27 Trainer · struck through = what FM wanted ·")));
+        ui.label(theme::faint(t!("Omlijnd = door FM27 Coach gezet · doorgestreept = wat FM wilde ·", "Outlined = set by FM27 Coach · struck through = what FM wanted ·")));
         for c in [TacticalUnderstanding, MatchPreparation, FootballingDevelopment, PhysicalRecovery, ExtraCurricular, Fixed] {
             theme::status_dot(ui, theme::rgb(c.color()));
             ui.label(theme::faint(c.label()));

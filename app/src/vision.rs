@@ -1333,7 +1333,7 @@ pub fn analyze_with_lines(img: &RgbaImage, lines: &[OcrLine]) -> Analysis {
 pub fn report(a: &Analysis, lines: &[OcrLine]) -> String {
     use std::fmt::Write;
     let mut s = String::new();
-    let _ = writeln!(s, "FM27 Trainer {} ({})", env!("CARGO_PKG_VERSION"), std::env::consts::OS);
+    let _ = writeln!(s, "FM27 Coach {} ({})", env!("CARGO_PKG_VERSION"), std::env::consts::OS);
     let _ = writeln!(s, "opname {}x{}, OCR {} (geïnstalleerd: {}), FM-taal {}, labels {}/21, tekst {:?} px", a.image_size.0, a.image_size.1, a.ocr, ocr_languages().join(" "), a.lang, a.labels, a.text_height.map(|t| t.round()));
     for g in &a.gauges {
         let _ = writeln!(s, "meter {:<36} {:>5.1}  vulling {:.2} tint {:>3.0} kader {:?}{}", g.factor.label(), g.score, g.fill, g.hue, g.bbox, if g.doubt { "  NAKIJKEN" } else { "" });
