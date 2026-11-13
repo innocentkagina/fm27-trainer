@@ -1,334 +1,340 @@
-# FM27 Trainer: overdracht voor Claude
+# FM27 Trainer: handover for Claude
 
-Lees dit eerst. Het vat alles samen wat in de eerste sessies (macOS, november 2026) is uitgezocht en gebouwd, zodat
-je op een Windows-pc verder kunt. De gebruiker (Sem) is Nederlandstalig: antwoord in het Nederlands, kort en concreet.
+Read this first. This is a fork of SemHiel2003/fm27-trainer (MIT). It summarises what the original author worked out
+and built (macOS and Windows, November 2026), translated from the original Dutch notes and adapted for this fork.
+Answer in English, short and concrete.
 
-## Wat het is
+**Always ask before deciding.** Any choice (product rules, wording users see, rebrand details, scope, git pushes,
+releases, file placement) goes to the user via AskUserQuestion: the recommended option first and labelled
+"(Recommended)", each option with a one-line trade-off. No silent defaults. Record the answers in this file or in
+`docs/`.
 
-Een Rust-app (egui) voor Football Manager 27:
+## Decisions (user-confirmed)
 
-1. **Tactical Effectiveness uitlezen.** Schermafbeelding van FM's *Breakdown*, OCR (Apple Vision / Windows.Media.Ocr),
-   taartmeters meten → 4 componenten + 17 key factors.
-2. **Training plannen** op de zwakste gebieden, met de 59 sessies en 99 presets uit FM27's eigen data.
-3. **Live in FM** (via een module): training in FM's kalender zetten en bijhouden (FM's assistent plant elke week de
-   komende 1–2 weken opnieuw in; de app zet ze terug), budget, blessures, schorsingen, moraal, **spelers direct
-   verkopen** aan en **kopen** van een andere club, en **tactisch begrip maximaliseren** (zoals FM's in-game editor).
+- 2026-11-13: Fork on GitHub (`innocentkagina/fm27-trainer`), source in `D:\FM27-Trainer-Windows`.
+- 2026-11-13: Pushing — ask before every push, tag or release to `origin`; never push to `upstream`.
+- 2026-11-13: Dutch comments/identifiers — leave them; new code in English; translate an area only after asking.
+- 2026-11-13: The downloaded upstream `FM27 Trainer.exe` stays in the folder, excluded from git, for comparison.
+- 2026-11-13: Goals for this fork: build it from source, rebrand it, and change/add features (details still to be
+  asked).
 
-Repo's (GitHub `SemHiel2003`):
-- `fm27-trainer`: **openbaar**, releases v0.2.0 (genotariseerde Mac-DMG + Windows-zip), v0.2.1, v0.2.2 (8 nov 2026) en v0.2.3 (9 nov 2026,
-  alleen Windows-zip via GitHub Actions, met de fixes voor de gebruikersmeldingen; de Mac-DMG komt van `./release.sh`
-  op de Mac en is voor 0.2.3 nog niet gemaakt). Daar níét zomaar naar pushen; de dev-repo
-  is er een voorouder van (fast-forward), en de release ontstaat door een tag `v*` naar de openbare repo te pushen (notes in
-  `docs/releases/<tag>.md`). Lokaal heet die remote `public`. Vaste downloadlinks (altijd de nieuwste release, voor de
-  downloadpagina's elders): `https://github.com/SemHiel2003/fm27-trainer/releases/latest/download/FM27-Trainer-Windows.zip`
-  en `.../FM27-Trainer-macOS.dmg` (de DMG heet sinds 0.2.2 zo, zonder versienummer; de versie staat in de app).
-- `fm27-trainer-dev`: **privé**, deze repo, met het nieuwste werk (verkopen, onderzoek biedingen, datumfix).
+## What it is
 
-## Opbouw
+A Rust app (egui) for Football Manager 27:
+
+1. **Read Tactical Effectiveness.** Screenshot of FM's *Breakdown*, OCR (Apple Vision / Windows.Media.Ocr),
+   measure the pie gauges → 4 components + 17 key factors.
+2. **Plan training** on the weakest areas, using the 59 sessions and 99 presets from FM27's own data.
+3. **Live in FM** (via the agent): write training into FM's calendar and keep it there (FM's assistant re-plans the
+   next 1–2 weeks every week; the app puts them back), budget, injuries, suspensions, morale, **sell players
+   directly** to and **buy** from another club, and **maximise tactical understanding** (like FM's in-game editor).
+
+## Repos and remotes
+
+- `origin` = `github.com/innocentkagina/fm27-trainer` — **this fork** (public). Work happens here.
+- `upstream` = `github.com/SemHiel2003/fm27-trainer` — the original project. Pull updates with
+  `git fetch upstream && git merge upstream/main`. **Never push to `upstream`.**
+- Releases: the GitHub Actions workflow (`.github/workflows/release.yml`) builds the Windows zip on a `v*` tag
+  (notes in `docs/releases/<tag>.md`) or manually (`platform=windows`). The macOS job needs Apple signing secrets
+  this fork does not have; it is skipped on tags unless the repo variable `MACOS_CI` is `true`.
+- The working folder `D:\FM27-Trainer-Windows` also holds the originally downloaded `FM27 Trainer.exe` (upstream
+  v0.2.4), excluded locally via `.git/info/exclude`. Keep it for comparison; don't commit it.
+- MIT licence: keep `LICENSE` and the original copyright line, also after a rebrand.
+
+## Layout
 
 ```
-app/                 de app (bin fm27-trainer): egui UI, OCR, planner, live-client
+app/                 the app (bin fm27-trainer): egui UI, OCR, planner, live client
   src/main.rs        CLI: analyze, year, agent '<json>', agent-serve, train [--write], start-fm
-  src/gui.rs         alle pagina's (Overzicht, Training, Planning, Club, Selectie, Verkopen, Instellingen)
-  src/live.rs        verbindingstoestand, achtergrondtaken, automatisch training bijhouden (elke 8 s)
-  src/live_training.rs  kalender lezen → plannen → per week schrijven
-  src/agent.rs       macOS: socket naar de module; Windows: roept fm27_agent::request rechtstreeks aan
-  src/planner.rs, model.rs, vision.rs, export.rs, theme.rs, i18n.rs (t!("nl", "en"))
-  src/labels.rs      de Breakdown-labels in alle 20 talen van FM (gegenereerd, tools/research/breakdown_labels.py)
-agent/               crate fm27-agent: de spellogica, gedeeld
-  src/lib.rs         dispatch van alle opdrachten (JSON); macOS: module in FM + socket-server
-  src/mem.rs         geheugen: macOS (Mach, eigen proces), Windows (ReadProcessMemory/WriteProcessMemory op fm.exe),
-                     tests (gesimuleerd geheugen)
-  src/rtti.rs        klassen herkennen: Itanium (clang/macOS) en MSVC (Windows)
-  src/game.rs        veldposities per platform (Layout MAC/WIN), builds (BUILDS), manager/club/selectie/training/undo
-  src/sell.rs        speler direct verkopen én kopen (één verhuisfunctie `relocate`), clubs zoeken, selectie van een club
-  src/understanding.rs  tactisch begrip (Tactical Understanding) per speler lezen en maximaliseren
-  src/tests.rs       hele flow tegen gesimuleerd FM-geheugen, beide indelingen; MSVC-RTTI tegen testdata/rtti_test.dll
-docs/TECHNICAL.md    architectuur en posities; docs/research/fm27-transfer-offers.md: onderzoek biedingen
-tools/research/      fmq.py (onderzoeksclient), offers.py, breakdown_labels.py (labels uit FM's languages.fmf),
-                     vision_regress.py (regressietest schermuitlezing: varianten van een opname, ook in andere talen)
+  src/gui.rs         all pages (Overview, Training, Planning, Club, Squad, Sell, Settings)
+  src/live.rs        connection state, background jobs, keep training on plan automatically (every 8 s)
+  src/live_training.rs  read calendar → plan → write per week
+  src/agent.rs       macOS: socket to the module; Windows: calls fm27_agent::request directly
+  src/planner.rs, model.rs, vision.rs, export.rs, theme.rs, i18n.rs (t!("nl", "en") — Dutch first, then English)
+  src/labels.rs      the Breakdown labels in all 20 FM languages (generated, tools/research/breakdown_labels.py)
+agent/               crate fm27-agent: the game logic, shared
+  src/lib.rs         dispatch of all commands (JSON); macOS: module inside FM + socket server
+  src/mem.rs         memory: macOS (Mach, own process), Windows (ReadProcessMemory/WriteProcessMemory on fm.exe),
+                     tests (simulated memory)
+  src/rtti.rs        class recognition: Itanium (clang/macOS) and MSVC (Windows)
+  src/game.rs        field offsets per platform (Layout MAC/WIN), builds (BUILDS), manager/club/squad/training/undo
+  src/sell.rs        sell and buy a player directly (one move function `relocate`), club search, a club's squad
+  src/understanding.rs  read and maximise tactical understanding per player
+  src/tests.rs       whole flow against simulated FM memory, both layouts; MSVC RTTI against testdata/rtti_test.dll
+docs/TECHNICAL.md    architecture and offsets; docs/research/fm27-transfer-offers.md: research on transfer offers
+tools/research/      fmq.py (research client), offers.py, breakdown_labels.py (labels from FM's languages.fmf),
+                     vision_regress.py (screen-reading regression test: variants of a capture, also other languages)
 ```
 
-Alle opdrachten van de module: `ping`, `club`, `squad`, `set_finances`, `heal`, `lift_bans`, `inspire`, `undo`,
-`game_date`, `training_weeks`, `set_week`, `clubs`, `club_squad`, `sell`, `buy`, `understanding`, `max_understanding` (met `dry_run`),
-`human_flags`, `set_human_flags`,
-`allow_untested`, en voor onderzoek `chain`, `census`, `class_of`, `read`, `find_u16`, `find_ptr`, `write` (alleen
-met `expect`), `discover`. Zie `agent/src/lib.rs`.
+Code comments and many identifiers are in Dutch (the original author's language). Keep the existing style when
+editing nearby code; ask before mass-translating comments (it makes merging upstream updates harder).
 
-## Bouwen en testen op Windows
+All agent commands: `ping`, `club`, `squad`, `set_finances`, `heal`, `lift_bans`, `inspire`, `undo`,
+`game_date`, `training_weeks`, `set_week`, `clubs`, `club_squad`, `sell`, `buy`, `understanding`, `max_understanding`
+(with `dry_run`), `human_flags`, `set_human_flags`, `allow_untested`, and for research `chain`, `census`, `class_of`,
+`read`, `find_u16`, `find_ptr`, `write` (only with `expect`), `discover`. See `agent/src/lib.rs`.
 
-- Rust stable met de MSVC-toolchain (`rustup default stable-x86_64-pc-windows-msvc`) en Visual Studio Build Tools
-  (workload "Desktop development with C++").
-- `cargo test -p fm27-agent`: 11 tests, `cargo test -p fm27-trainer`: 3 tests (nagemaakte taartmeters); horen allemaal te slagen.
-- `cargo run -p fm27-trainer`: de app. `cargo build --release -p fm27-trainer` → `target\release\fm27-trainer.exe`
-  (statische C-runtime via `.cargo/config.toml`).
-- **De release-exe heeft geen console** (`windows_subsystem = "windows"`). Gebruik voor de CLI de debug-build:
-  `cargo run -p fm27-trainer -- agent "{\"cmd\":\"ping\"}"`. Voor scripts: `agent-serve` (stdin/stdout, werkt ook
-  met de release-exe), zie `tools/research/fmq.py`.
-- De Mac-DMG kan alleen op de Mac (`./release.sh`, Developer ID + notarisatie). Windows-zip: GitHub Actions
-  (`.github/workflows/release.yml`, bij een tag `v*` of handmatig met `platform=windows`).
-- Op deze pc (8 nov 2026 geïnstalleerd): rustup (`%USERPROFILE%\.cargo\bin`), VS Build Tools 2022 (MSVC 14.44,
-  SDK 10.0.26100) en Python 3.12 (`%LOCALAPPDATA%\Programs\Python\Python312`); beide mappen staan op het
-  gebruikers-PATH (een al open terminal ziet dat pas na een herstart). Python met `-X utf8` draaien, anders
-  struikelt de console over accenten in spelersnamen.
-- De agent-crate wordt ook in de debug-build geoptimaliseerd (`[profile.dev.package.fm27-agent]` in Cargo.toml):
-  zonder dat duurt een heap-scan ruim een minuut in plaats van 1,5 s.
+## Build and test on Windows
 
-## Hoe live werkt op Windows
+- Rust stable with the MSVC toolchain (`rustup default stable-x86_64-pc-windows-msvc`) and Visual Studio Build Tools
+  (workload "Desktop development with C++"). On this PC both were installed via winget on 13 Nov 2026; a terminal
+  that was already open only sees `%USERPROFILE%\.cargo\bin` on PATH after a restart.
+- `cargo test -p fm27-agent`: 11 tests, `cargo test -p fm27-trainer`: 3 tests (synthetic pie gauges); all should pass.
+- `cargo run -p fm27-trainer`: the app. `cargo build --release -p fm27-trainer` → `target\release\fm27-trainer.exe`
+  (static C runtime via `.cargo/config.toml`, so no VC++ Redistributable needed).
+- **The release exe has no console** (`windows_subsystem = "windows"`). Use the debug build for the CLI:
+  `cargo run -p fm27-trainer -- agent "{\"cmd\":\"ping\"}"`. For scripts: `agent-serve` (stdin/stdout, also works
+  with the release exe), see `tools/research/fmq.py`.
+- Python tools: run with `-X utf8`, otherwise the console chokes on accents in player names.
+- The agent crate is optimised even in the debug build (`[profile.dev.package.fm27-agent]` in Cargo.toml):
+  without it a heap scan takes over a minute instead of 1.5 s.
+- The Mac DMG can only be built on a Mac with a Developer ID (`./release.sh`, signing + notarisation).
 
-- De app zoekt `fm.exe` (Toolhelp), opent het met `PROCESS_VM_READ | VM_WRITE | VM_OPERATION | QUERY_INFORMATION`
-  en leest/schrijft van buitenaf. FM gewoon via Steam starten; geen module of injectie.
-- De native kern heet `game_plugin.dll`. Een build heet `PE-<linktijd>-<SizeOfImage>`; Steam 26340721 =
-  `PE-6AE565AF-1821C000`, Game Pass / Xbox-app 0.9.2409.0 = `PE-6AE563A1-175DA000` (zelfde update, zelfde
-  objectindeling; vaste plekken uit FMLibreEditor `profiles/fm27/gamepass-0.9.2409.0.toml`; schrijven staat aan,
-  **niet door ons live getest**). Onbekende build → geen vaste adressen (staflijst, clublijst, datum).
-  Game Pass draait ook als `fm.exe` (uit `...\Content\`); een Xbox-console kan de app niet lezen.
-- **Builds na de release** (12 nov 2026, na meldingen "not connected" op sortitoutsi en GitHub #1/#2; alle vaste
-  plekken uit FMLibreEditor `profiles/fm27/`, objectindeling volgens hen ongewijzigd): Steam 26385295 (10 nov) =
-  `PE-6AE8B5A4-17CB9000` en 26577676 (12 nov) = `PE-6AF38E5C-185FA000`, beide staf 0x5820858, clubs 0x58209C8, datum
-  0x57CA3B8; Game Pass 0.9.2435.0 = `PE-6AE8CF77-17969000`, staf 0x53B7E28, clubs 0x53B7F98, datum 0x53597C8; Mac
-  arm64 26385295 (`2A2D0ED6-…`) en 26577676 (`A8550B47-FDE0-3D0D-A6CB-1B63DEE8DA19`), beide staf 0x576EE98, clubs
-  0x576F008, datum 0x574DDB8; de Intel-helften staan ook in `BUILDS`. Schrijven: Mac arm64 26577676 **live getest**
-  (12 nov 2026); de drie Windows-builds staan aan **op grond van FMLibreEditor's meting** (besluit van Sem; hij test
-  Windows zelf na); Mac 26385295 en Intel: alleen lezen.
-- **Onbekende build** (`game::statics` → `discover`): de app zoekt de lijsten zelf. Het clubpaar staat in alle 11
-  gemeten profielen 0x170 achter het stafpaar; gezocht wordt naar twee pointerlijst-paren op die afstand (grootste
-  eerst) waarvan het tweede clubs bevat en het eerste een manager met kloppende keten die bij een club uit die lijst
-  uitkomt. Datum: binnen 0x400 van de afstand datum↔staflijst van de bekende builds van hetzelfde platform, passend
-  bij de teamdatum; anders de teamdatum zoals vroeger. Schrijven blijft dan uit tot `allow_untested`. Gemeten op de
-  Mac: 1.945 dubbele paren in `__DATA`, 21 datum-achtige waarden, precies één binnen 0x400; de spel-datum heeft
-  vlagbits boven de dag (0x19). Onderzoeksopdracht `discover` vergelijkt de zoektocht met het profiel; `ping` geeft
-  `statics: profile|discovered|null` en `build_label`. Bij een nieuwe patch: profiel uit FMLibreEditor overnemen in
-  `BUILDS` en de procedure van Taak 1 doen.
-- **Schrijven staat op Windows aan** voor Steam-build 26340721 (`writes_tested: true` in `BUILDS`,
-  `agent/src/game.rs`; live gecontroleerd op 8 nov 2026). Op een onbekende build (na een FM-patch) staat de app op
-  alleen lezen; de gebruiker kan het per sessie toestaan (Instellingen → "Aanpassen op een niet-geteste FM-versie" →
-  opdracht `allow_untested`).
-- `game_plugin.dll` is **ingepakt**: secties heten `.xtext`, `.data1`, `.shared`, `.rodata`, `.sbss` (307 MB, wordt
-  bij het laden gevuld), `.rdata` (klein). De beschermer hernoemt ze per build: op Game Pass staan de TypeDescriptors
-  in `.00cfg` en heet de grote RWX-sectie `.rsrc`. De MSVC-RTTI-zoeker doorzoekt daarom **alle** secties, ongeacht de
-  naam (`msvc_areas` in `agent/src/rtti.rs`; tot 9 nov 2026 sloeg hij `.rsrc`/`.00cfg` over, waardoor de app op Game
-  Pass geen manager vond); een blok dat niet in één keer leesbaar is,
-  wordt in kleinere stukken geprobeerd (`mem::for_each_chunk`). `class_of` op het managerobject zelf geeft None
-  (vbptr); de manager wordt via de staflijst gevonden. Een klasse opzoeken kost eenmalig ~1,5 s, een volledige
-  heap-scan (3,5 GB) ~1,5 s in een release-build.
+## How live works on Windows
 
-## Veiligheidsregels (altijd)
+- The app finds `fm.exe` (Toolhelp), opens it with `PROCESS_VM_READ | VM_WRITE | VM_OPERATION | QUERY_INFORMATION`
+  and reads/writes from outside. Just start FM via Steam; no module or injection.
+- The native core is `game_plugin.dll`. A build is labelled `PE-<linktime>-<SizeOfImage>`; Steam 26340721 =
+  `PE-6AE565AF-1821C000`, Game Pass / Xbox app 0.9.2409.0 = `PE-6AE563A1-175DA000` (same update, same object
+  layout; fixed addresses from FMLibreEditor `profiles/fm27/gamepass-0.9.2409.0.toml`; writing enabled,
+  **not live-tested by the original author**). Unknown build → no fixed addresses (staff list, club list, date).
+  Game Pass also runs as `fm.exe` (from `...\Content\`); an Xbox console cannot be read.
+- **Builds after the release** (12 Nov 2026, after "not connected" reports on sortitoutsi and GitHub #1/#2; all fixed
+  addresses from FMLibreEditor `profiles/fm27/`, object layout unchanged according to them): Steam 26385295 (10 Nov) =
+  `PE-6AE8B5A4-17CB9000` and 26577676 (12 Nov) = `PE-6AF38E5C-185FA000`, both staff 0x5820858, clubs 0x58209C8, date
+  0x57CA3B8; Game Pass 0.9.2435.0 = `PE-6AE8CF77-17969000`, staff 0x53B7E28, clubs 0x53B7F98, date 0x53597C8; Mac
+  arm64 26385295 (`2A2D0ED6-…`) and 26577676 (`A8550B47-FDE0-3D0D-A6CB-1B63DEE8DA19`), both staff 0x576EE98, clubs
+  0x576F008, date 0x574DDB8; the Intel halves are in `BUILDS` too. Writing: Mac arm64 26577676 **live-tested**
+  (12 Nov 2026); the three Windows builds are enabled **on the strength of FMLibreEditor's measurements** (the
+  original author's decision; not live-tested on Windows); Mac 26385295 and Intel: read-only.
+- **Unknown build** (`game::statics` → `discover`): the app looks for the lists itself. In all 11 measured profiles
+  the club pair sits 0x170 after the staff pair; it searches for two pointer-list pairs at that distance (largest
+  first) where the second holds clubs and the first a manager with a valid chain ending at a club from that list.
+  Date: within 0x400 of the date↔staff-list distance of the known builds of the same platform, matching the team
+  date; otherwise the team date as before. Writing stays off until `allow_untested`. Measured on the Mac: 1,945
+  double pairs in `__DATA`, 21 date-like values, exactly one within 0x400; the game date has flag bits above the day
+  (0x19). Research command `discover` compares the search with the profile; `ping` returns
+  `statics: profile|discovered|null` and `build_label`. On a new FM patch: copy the profile from FMLibreEditor into
+  `BUILDS` and run the Task 1 procedure.
+- **Writing is enabled on Windows** for Steam build 26340721 (`writes_tested: true` in `BUILDS`,
+  `agent/src/game.rs`; live-checked 8 Nov 2026). On an unknown build (after an FM patch) the app is read-only; the
+  user can allow it per session (Settings → "Modify on an untested FM version" → command `allow_untested`).
+- `game_plugin.dll` is **packed**: sections are named `.xtext`, `.data1`, `.shared`, `.rodata`, `.sbss` (307 MB,
+  filled on load), `.rdata` (small). The protector renames them per build: on Game Pass the TypeDescriptors are in
+  `.00cfg` and the big RWX section is called `.rsrc`. The MSVC RTTI search therefore scans **all** sections,
+  regardless of name (`msvc_areas` in `agent/src/rtti.rs`; until 9 Nov 2026 it skipped `.rsrc`/`.00cfg`, so the app
+  found no manager on Game Pass); a block that can't be read in one go is tried in smaller pieces
+  (`mem::for_each_chunk`). `class_of` on the manager object itself returns None (vbptr); the manager is found via the
+  staff list. Looking up a class costs ~1.5 s once, a full heap scan (3.5 GB) ~1.5 s in a release build.
 
-- Schrijven alleen via `write_checked`/`Patch`: eerst controleren dat het geheugen nog precies is wat je verwacht,
-  daarna teruglezen. Elke wijziging met undo (`Change` in game.rs; geld als verschil).
-- Experimenten alleen in een **aparte test-save**, en de gebruiker mag tijdens een experiment **niet doorspelen of
-  opslaan**. Na een experiment: FM sluiten zonder op te slaan, of netjes terugzetten.
-- Lijsten waarvan de plek iets betekent (de biedingenlijst: bodnummer = index) nooit opschuiven.
-- `find_ptr` vindt ook de eigen buffers van de module: altijd controleren met `u64(a) == target`. Limiet 200.
-- FMLibreEditor (github.com/tozmoz/FMLibreEditor) is GPL: gebruik hun **feiten** (posities, gedrag), kopieer geen code.
-  Dit project is MIT.
-- Niet naar de openbare repo pushen of releasen zonder het te vragen.
+## Safety rules (always)
 
-## Posities (Steam-build 26340721)
+- Write only via `write_checked`/`Patch`: first check the memory is still exactly what you expect, then read it back.
+  Every change has an undo (`Change` in game.rs; money as a difference).
+- Experiments only in a **separate test save**, and the user must **not play on or save** during an experiment.
+  After an experiment: close FM without saving, or restore cleanly.
+- Never shift lists whose position means something (the offers list: offer number = index).
+- `find_ptr` also finds the module's own buffers: always verify with `u64(a) == target`. Limit 200.
+- FMLibreEditor (github.com/tozmoz/FMLibreEditor) is GPL: use their **facts** (offsets, behaviour), never copy code.
+  This project is MIT.
+- Don't push to `origin`, create tags or releases without asking. Never push to `upstream`.
 
-Spelers en staf verschillen per platform; clubs, financiën, contracten, teams, blessures en schorsingen niet.
+## Offsets (Steam build 26340721)
 
-| Veld | macOS | Windows |
+Players and staff differ per platform; clubs, finances, contracts, teams, injuries and suspensions don't.
+
+| Field | macOS | Windows |
 |---|---|---|
-| Manager: contract / identiteitsblok (+ shift 0x340) | 0x170 / 0x208 | 0x1A8 / 0x100 |
-| Speler: team, blessure-record | 0x128, 0xF0 | 0x130, 0xF8 |
-| Speler: scherpte, conditie, moraal (u8 1–20) | 0x250, 0x254, 0x264 | 0x258, 0x25C, 0x26C |
-| Speler: namen (voor, achter, roep) | 0x298, 0x2A0, 0x2A8 | 0x2D8, 0x2E0, 0x2E8 |
-| Speler: contract, identiteitsblok, UID | 0x2F0, 0x388, 0x394 | 0x330, 0x288, 0x294 |
-| Speler: transferwaarde, vraagprijs (i32 pond) | 0x22C, 0x230 | 0x234, 0x238 |
-| Speler: record tactisch begrip (ptr, zie onder) | 0xF8 (niet gemeten) | 0x100 |
-| Interne persoons-id | identiteitsblok + 8 | identiteitsblok + 8 |
-| Speler-trainer: alles vanaf het persoonsblok verder met | 0xF8 | 0xF8 |
+| Manager: contract / identity block (+ shift 0x340) | 0x170 / 0x208 | 0x1A8 / 0x100 |
+| Player: team, injury record | 0x128, 0xF0 | 0x130, 0xF8 |
+| Player: sharpness, condition, morale (u8 1–20) | 0x250, 0x254, 0x264 | 0x258, 0x25C, 0x26C |
+| Player: names (first, last, common) | 0x298, 0x2A0, 0x2A8 | 0x2D8, 0x2E0, 0x2E8 |
+| Player: contract, identity block, UID | 0x2F0, 0x388, 0x394 | 0x330, 0x288, 0x294 |
+| Player: transfer value, asking price (i32 pounds) | 0x22C, 0x230 | 0x234, 0x238 |
+| Player: tactical understanding record (ptr, see below) | 0xF8 (not measured) | 0x100 |
+| Internal person id | identity block + 8 | identity block + 8 |
+| Player-coach: everything from the person block on shifts by | 0xF8 | 0xF8 |
 
-Gedeeld: contract `+0x08` eigenaar (→ identiteitsblok), `+0x10` team, `+0x18` senior team, `+0x20` salaris,
-`+0x26` job (1 speler), `+0x30` ontevredenheid (ptr), `+0x44/+0x48/+0x4C` getekend/einde/bij club (datum),
-`+0x57` transfer-/huurlijst (bit 0/1), `+0x5A` happiness (**i8**), `+0x5D` rugnummer (255 = geen).
-Team `+0x30` club, `+0x38` spelerslijst (begin, end, cap), `+0x88/+0x90` (vice-)aanvoerder.
-Club `+0x0C` UID, `+0x18` teams (eerste = eerste elftal), `+0xB9` vrouwenclub, `+0xC0` naam, `+0x150` financiën.
-Financiën `+0x0C` saldo, `+0x7C4` transferbudget, `+0x808` totaal loonbudget, `+0x814` loonbudget (i32 pond),
-`+0x864` ticketprijs (f32), `+0x8A9` corporate (u8). Blessure-record: lijst huidige blessures (genezen = end := begin),
-`+0x18` afwezigheden (schorsing: `0xFFFF` op +0x16). Datum = u16 dag-van-het-jaar (lage 9 bits, rest vlaggen) + u16 jaar.
+Shared: contract `+0x08` owner (→ identity block), `+0x10` team, `+0x18` senior team, `+0x20` wage,
+`+0x26` job (1 = player), `+0x30` unhappiness (ptr), `+0x44/+0x48/+0x4C` signed/expires/joined (date),
+`+0x57` transfer/loan list (bit 0/1), `+0x5A` happiness (**i8**), `+0x5D` squad number (255 = none).
+Team `+0x30` club, `+0x38` player list (begin, end, cap), `+0x88/+0x90` (vice-)captain.
+Club `+0x0C` UID, `+0x18` teams (first = first team), `+0xB9` women's club, `+0xC0` name, `+0x150` finances.
+Finances `+0x0C` balance, `+0x7C4` transfer budget, `+0x808` total wage budget, `+0x814` wage budget (i32 pounds),
+`+0x864` ticket price (f32), `+0x8A9` corporate (u8). Injury record: list of current injuries (healed = end := begin),
+`+0x18` absences (suspension: `0xFFFF` at +0x16). Date = u16 day-of-year (low 9 bits, rest flags) + u16 year.
 
-Vaste plekken (RVA in game_plugin):
+Fixed addresses (RVA in game_plugin):
 
 | | macOS arm64 | Windows |
 |---|---|---|
-| staflijst (begin, end) | 0x56D2E60 | 0x5705818 |
-| clublijst (begin, end) | 0x56D2FD0 | 0x5705988 |
-| spel-datum | 0x56B1DB8 | 0x56AF378 |
+| staff list (begin, end) | 0x56D2E60 | 0x5705818 |
+| club list (begin, end) | 0x56D2FD0 | 0x5705988 |
+| game date | 0x56B1DB8 | 0x56AF378 |
 
-De manager wordt gevonden via de staflijst (Windows eerst) of RTTI `db::HUMAN_NON_PLAYER`.
-**Spel-datum:** altijd de vaste plek; team+0xA0→+0x94 is een ándere datum (rond de laatste wedstrijd).
+The manager is found via the staff list (Windows first) or RTTI `db::HUMAN_NON_PLAYER`.
+**Game date:** always the fixed address; team+0xA0→+0x94 is a *different* date (around the last match).
 
-**Training** (gemeten op macOS én Windows, beide **+0x28**): een blok per team met de team-pointer en op +0x28 een
-lijst van weekrecords (0x60 bytes: `+0x00` naam van het schema (FM-string), `+0x0C` maandag, `+0x10` 7 × [u16 0,
-sessie 1, sessie 2, extra], `+0x48` u32 nummer van het schema-sjabloon). Op Windows probeert de code voor de
-zekerheid ook 0x08–0x80 met strenge controles, voor het geval een latere build afwijkt. **Zoeken** (9 nov 2026, na
-meldingen "training calendar not found"): alle heapwoorden gelijk aan de team-pointer, zonder limiet (vroeger stopte
-het bij 20.000; Sunderland-save: 2.042 treffers, kalender nummer 1.462). Een week telt als de maandag geldig is, het
-eerste woord per dag klein (≤ 0xFF, nooit geschreven) en ≥ 2/3 van de 21 vakken een bekende code (≤ 600), waarvan
-≥ 5 niet nul; `set_week` laat een dag met een onbekende code ongemoeid. Vindt het niets, dan noemt de fout het aantal
-treffers en waarom bijna-kandidaten afvielen. De echte oorzaak bij de gebruikers is niet gezien (geen save van hen).
-Sessiecodes: 0–7 Tactical Understanding, 100–108 Match Preparation, 200–228 Footballing
-Development, 300–307 Physical, 400 Team Bonding, 401 Community, 402 reizen, 500 wedstrijd.
+**Training** (measured on macOS and Windows, both **+0x28**): one block per team with the team pointer and at +0x28 a
+list of week records (0x60 bytes: `+0x00` schedule name (FM string), `+0x0C` Monday, `+0x10` 7 × [u16 0,
+session 1, session 2, extra], `+0x48` u32 schedule template number). On Windows the code also tries 0x08–0x80 with
+strict checks, in case a later build differs. **Search** (9 Nov 2026, after "training calendar not found"
+reports): all heap words equal to the team pointer, no limit (it used to stop at 20,000; Sunderland save: 2,042
+hits, calendar was number 1,462). A week counts if the Monday is valid, the first word per day is small (≤ 0xFF,
+never written) and ≥ 2/3 of the 21 slots hold a known code (≤ 600), of which ≥ 5 non-zero; `set_week` leaves a day
+with an unknown code alone. If nothing is found, the error states the number of hits and why near-candidates were
+rejected. The real cause for the reporting users was never seen (no save from them).
+Session codes: 0–7 Tactical Understanding, 100–108 Match Preparation, 200–228 Footballing Development,
+300–307 Physical, 400 Team Bonding, 401 Community, 402 travel, 500 match.
 
-**Opstellingen**: `simatch::PREPARED_TACTICS_CREATOR_ARRAY`, `+0x08` lijst, `+0x28` 26 × u32 persoons-id
-(0xFFFFFFFF = leeg). Lijstblokken van de allocator: Mac 144…4096, Windows 144…512 (`heap_blocks`).
+**Line-ups**: `simatch::PREPARED_TACTICS_CREATOR_ARRAY`, `+0x08` list, `+0x28` 26 × u32 person id
+(0xFFFFFFFF = empty). Allocator list blocks: Mac 144…4096, Windows 144…512 (`heap_blocks`).
 
-**Spelregels (editorvlaggen van de manager)**: u32 op manager+0x3FC (Windows; Mac onbekend, `Layout.human_flags`),
+**Game rules (manager editor flags)**: u32 at manager+0x3FC (Windows; Mac unknown, `Layout.human_flags`),
 bit 0x100 = "Allow squad registration anytime", 0x200 = "Allow squad numbers anytime" (FM's in-game editor,
-acties `TEAM_CONTAINER_ALLOW_SQUAD_REGISTRATION_ANYTIME_ACTION` / `..._SQUAD_NUMBERS_...`; de actie zet of wist het bit
-op het object dat de HUMAN-record via vtable+0x698 teruggeeft, en dat is het managerobject zelf: het subobject op
-manager+0x440 heeft de HUMAN_NON_PLAYER-vtable, wat de app controleert voor het schrijven). Standaard 0. Dat een
-gezet bit "altijd toestaan" betekent, is afgeleid, niet in FM's scherm gezien: controleren op het registratiescherm
-van een competitie. Opdrachten `human_flags`/`set_human_flags`, schakelaars op de Club-pagina ("Spelregels").
+actions `TEAM_CONTAINER_ALLOW_SQUAD_REGISTRATION_ANYTIME_ACTION` / `..._SQUAD_NUMBERS_...`; the action sets or clears
+the bit on the object the HUMAN record returns via vtable+0x698, which is the manager object itself: the subobject at
+manager+0x440 has the HUMAN_NON_PLAYER vtable, which the app checks before writing). Default 0. That a set bit means
+"always allow" is inferred, not seen on FM's screen: verify on a competition's registration screen. Commands
+`human_flags`/`set_human_flags`, switches on the Club page ("Rules").
 
-**Tactisch begrip** (FM27's "Tactical Understanding", de opvolger van tactical familiarity; gevonden op 8 nov 2026
-door FM's editor-actie `TEAM_MAXIMISE_TACTICAL_UNDERSTANDING_ACTION` te disassembleren, zie
-`agent/src/understanding.rs`): speler `+0x100` → record van 0xE0 bytes. Zes blokken van 0x20 (gebied 0–5: Passing
-Style, Build Up, Chance Creation, In Possession Shape, Line of Engagement, Pressing Intensity): (begin, end, cap)-lijst
-van u32-items (bits 0–13 niveau 0–10000, bits 14–19 tactiekinstelling 0–20, rest rommel) + u64 gebiedsnummer op
-`+0x18`; op `+0xC0` een lijst van 16-byte-items voor Pressing Trap en Out Of Possession Shape (u16 rol/positie, 11
-bytes vorm, u8 vlaggen, u16 niveau op `+0x0E`); `+0xD8` datum, `+0xDC` "veranderd". Begrip voor een instelling = max
-over items van (niveau − 1000 × afstand), bodem 1000. Maximaliseren zet elk item op 10000 en voegt de meest
-voorkomende instelling toe voor wie hem mist, alleen binnen de capaciteit van FM's lijst (geen eigen allocatie).
-Live getest op Windows (8 nov 2026, Ajax-save, 27 spelers). **FM laat de niveaus elke speelweek zakken** (na vier
-speelmaanden stond alles van 10000 weer op 7620), vandaar de schakelaar "Op 100 % houden" (instelling
-`keep_understanding`): elke 20 s, bij de gewone verbindingscontrole, stuurt de app `max_understanding`, dat alleen
-schrijft wat gezakt is. Het trainingsblok van TRAINING_MANAGER per team (zie boven) en `TACTICS_MANAGER` bevatten
-dit níét. Disassembleren kan met capstone (`pip install capstone`) op code die
-via `read` uit fm.exe komt; game_plugin.dll ligt op Windows ingepakt op schijf maar uitgepakt in het geheugen.
+**Tactical understanding** (FM27's "Tactical Understanding", successor of tactical familiarity; found 8 Nov 2026 by
+disassembling FM's editor action `TEAM_MAXIMISE_TACTICAL_UNDERSTANDING_ACTION`, see `agent/src/understanding.rs`):
+player `+0x100` → record of 0xE0 bytes. Six blocks of 0x20 (area 0–5: Passing Style, Build Up, Chance Creation,
+In Possession Shape, Line of Engagement, Pressing Intensity): (begin, end, cap) list of u32 items (bits 0–13 level
+0–10000, bits 14–19 tactic setting 0–20, rest junk) + u64 area number at `+0x18`; at `+0xC0` a list of 16-byte items
+for Pressing Trap and Out Of Possession Shape (u16 role/position, 11 bytes shape, u8 flags, u16 level at `+0x0E`);
+`+0xD8` date, `+0xDC` "changed". Understanding for a setting = max over items of (level − 1000 × distance), floor
+1000. Maximising sets every item to 10000 and adds the most common setting for players missing it, only within the
+capacity of FM's list (no own allocation). Live-tested on Windows (8 Nov 2026, Ajax save, 27 players). **FM lets
+the levels drop every game week** (after four months of play everything had fallen from 10000 to 7620), hence the
+"Keep at 100 %" switch (setting `keep_understanding`): every 20 s, with the regular connection check, the app sends
+`max_understanding`, which only writes what has dropped. TRAINING_MANAGER's per-team training block (above) and
+`TACTICS_MANAGER` do *not* contain this. Disassemble with capstone (`pip install capstone`) on code fetched from
+fm.exe via `read`; on Windows game_plugin.dll is packed on disk but unpacked in memory.
 
-## Wat is getest, waar
+## What has been tested, where (by the original author)
 
-| | macOS (live, Ajax-save) | Windows |
+| | macOS (live, Ajax save) | Windows |
 |---|---|---|
-| uitlezen club/selectie/kalender | ✅ | ✅ (8 nov 2026, Ajax-save) |
-| budget, genezen, moraal, training schrijven, undo | ✅ | ✅ (8 nov 2026) |
-| verkopen (`sell`) | alleen simulatie | ✅ dry run én één echte verkoop + undo (8 nov 2026) |
-| kopen (`buy`, `club_squad`) | alleen simulatie | dry run live (8 nov 2026); echte aankoop door de gebruiker te testen |
-| spelregels (`set_human_flags`) | n.v.t. (plek onbekend) | gelezen (0); effect in FM door de gebruiker te controleren |
-| tactisch begrip (`understanding`, `max_understanding`) | alleen simulatie (offset 0xF8 is een gok) | ✅ gelezen en gemaximaliseerd (8 nov 2026) |
-| MSVC-RTTI | n.v.t. | ✅ testdata én live (census, opstellingen) |
-| Game Pass / Xbox-app (0.9.2409.0) | n.v.t. | alleen simulatie (build, datum, staflijst, kalender); posities van FMLibreEditor |
+| read club/squad/calendar | ✅ | ✅ (8 Nov 2026, Ajax save) |
+| budget, heal, morale, write training, undo | ✅ | ✅ (8 Nov 2026) |
+| sell (`sell`) | simulation only | ✅ dry run and one real sale + undo (8 Nov 2026) |
+| buy (`buy`, `club_squad`) | simulation only | dry run live (8 Nov 2026); real purchase untested |
+| game rules (`set_human_flags`) | n/a (location unknown) | read (0); effect in FM unverified |
+| tactical understanding (`understanding`, `max_understanding`) | simulation only (offset 0xF8 is a guess) | ✅ read and maximised (8 Nov 2026) |
+| MSVC RTTI | n/a | ✅ testdata and live (census, line-ups) |
+| Game Pass / Xbox app (0.9.2409.0) | n/a | simulation only (build, date, staff list, calendar); offsets from FMLibreEditor |
 
-Mac arm64, Steam-build 26577676 (12 nov 2026, Ajax-save 25 juli 2027, `scratchpad/livetest.py`-achtige reeks via
-`fm27-trainer agent`): club, selectie (30), kalender (108 weken), clubs, tactisch begrip (offset 0xF8 leest
-plausibele waarden), datum ✅; `set_finances` +1, `inspire` (17→20), `set_week` (één dag), elk met `undo` en exact
-terug ✅; `heal` zonder geblesseerden (niets te doen); `sell`/`buy`/`max_understanding` alleen `dry_run`. Windows
-op de nieuwe builds: **nog niet live getest**. Dezelfde reeks is herhaald met de release-binaries van 0.2.4; de
-opdracht `discover` vond daar in 64 ms exact de adressen van het profiel (`same: true`).
+Mac arm64, Steam build 26577676 (12 Nov 2026, Ajax save 25 July 2027, sequence via `fm27-trainer agent`): club,
+squad (30), calendar (108 weeks), clubs, tactical understanding (offset 0xF8 reads plausible values), date ✅;
+`set_finances` +1, `inspire` (17→20), `set_week` (one day), each with `undo` and exactly restored ✅; `heal` with no
+injured players (nothing to do); `sell`/`buy`/`max_understanding` only `dry_run`. Windows on the new builds:
+**not live-tested yet**. The same sequence was repeated with the 0.2.4 release binaries; `discover` found exactly the
+profile's addresses there in 64 ms (`same: true`).
 
-## Taak 1: Windows live controleren — gedaan (8 nov 2026)
+## Task 1: verify Windows live — procedure (done upstream on 8 Nov 2026 for build 26340721)
 
-Alle stappen hieronder zijn op Steam-build 26340721 doorlopen en groen: lezen klopte met FM (club, saldo, budgetten,
-datum, selectie, kalender), en `set_finances`, `inspire`, `heal`, `set_week` en `sell` (dry run én één echte
-verkoop) werkten elk met `undo`. Gevonden en opgelost: de RTTI-zoeker keek alleen in `.data`/`.rdata` (ingepakte
-DLL, zie boven) waardoor verkopen faalde, en de debug-build was ~40x te traag. Na een FM-patch (build onbekend:
-`known_build false`) dezelfde procedure opnieuw doen.
+Steps below were all green on Steam build 26340721: reading matched FM (club, balance, budgets, date, squad,
+calendar), and `set_finances`, `inspire`, `heal`, `set_week` and `sell` (dry run and one real sale) each worked with
+`undo`. Found and fixed then: the RTTI search only looked in `.data`/`.rdata` (packed DLL, see above) so selling
+failed, and the debug build was ~40x too slow. After an FM patch (unknown build: `known_build false`) repeat this.
 
-Gebruik een test-save. Start FM27 via Steam, laad de save, dan:
+Use a test save. Start FM27 via Steam, load the save, then:
 
 ```
 cargo build -p fm27-trainer
-python -i tools\research\fmq.py
->>> q({"cmd":"ping"})            # build moet PE-6AE565AF-1821C000 zijn, known_build false
->>> q({"cmd":"club"})            # naam, saldo, budgetten: vergelijk met FM (FM toont euro's: pond × ~1,17)
->>> q({"cmd":"squad"})           # namen, moraal, conditie, blessures, waarde, contract
->>> q({"cmd":"game_date"})       # moet de datum in FM zijn
->>> q({"cmd":"training_weeks"})  # maandagen 7 dagen uit elkaar, codes zoals FM's kalender
+python -X utf8 -i tools\research\fmq.py
+>>> q({"cmd":"ping"})            # check build label and known_build
+>>> q({"cmd":"club"})            # name, balance, budgets: compare with FM (FM shows euros: pounds × ~1.17)
+>>> q({"cmd":"squad"})           # names, morale, condition, injuries, value, contract
+>>> q({"cmd":"game_date"})       # must be the date in FM
+>>> q({"cmd":"training_weeks"})  # Mondays 7 days apart, codes matching FM's calendar
 ```
 
-Klopt alles, sta schrijven toe (`q({"cmd":"allow_untested","on":True})`) en test, telkens met `undo` erachteraan en
-controle in FM: `set_finances` (transferbudget +1), `inspire` voor één speler, `heal`, `set_week` voor één dag in de
-toekomst, `sell` met `dry_run`, daarna één echte verkoop + `undo`. Werkt alles: zet `writes_tested: true` voor de
-Windows-build in `BUILDS`, noteer in welke afstand het trainingsblok gevonden werd (`State.training_block`; zo
-nodig `TB_WEEKS` per platform maken), werk docs/TECHNICAL.md en de README bij, en vraag of er een release moet komen.
+If all is right, allow writing (`q({"cmd":"allow_untested","on":True})`) and test, each followed by `undo` and a
+check in FM: `set_finances` (transfer budget +1), `inspire` for one player, `heal`, `set_week` for one future day,
+`sell` with `dry_run`, then one real sale + `undo`. If everything works: set `writes_tested: true` for the Windows
+build in `BUILDS`, note at which offset the training block was found (`State.training_block`; make `TB_WEEKS` per
+platform if needed), update docs/TECHNICAL.md and the README, and ask whether a release should follow.
 
-Gaat iets mis: kijk met `census`, `describe`, `refs` waar het verschilt; vergelijk met FMLibreEditor's
+If something goes wrong: use `census`, `describe`, `refs` to see where it differs; compare with FMLibreEditor's
 `profiles/fm27/layout.toml`.
 
-## Taak 2: transferbiedingen (zie docs/research/fm27-transfer-offers.md)
+## Task 2: transfer offers (see docs/research/fm27-transfer-offers.md) — open upstream research
 
-De wens van de gebruiker: in de app zeggen "verkoop speler X aan club Y voor Z" en dan komt er in FM een **echt bod**.
+The original goal: say "sell player X to club Y for Z" in the app and get a **real offer** in FM.
 
-Bekend (macOS): een bod is `FULL_TRANSFER_OFFER` (0xD0 bytes, uit een pool), alle biedingen staan in
-`TRANSFER_MANAGER+0x08` (bodnummer = index). FM toont een bod alleen via zijn inbox-bericht `TRANSFER_OFFER_NEWS`
-(groot object, ~40 verwijzingen, in een nieuwsstroom zonder lijst) en een detailrecord met totaalsom, bodnummer,
-volgnummer en bonussen. Een bod zonder bericht is onzichtbaar en wordt niet afgehandeld (getest).
+Known (macOS): an offer is `FULL_TRANSFER_OFFER` (0xD0 bytes, from a pool), all offers are in
+`TRANSFER_MANAGER+0x08` (offer number = index). FM only shows an offer via its inbox message `TRANSFER_OFFER_NEWS`
+(large object, ~40 references, in a news stream without a list) and a detail record with total, offer number,
+sequence number and bonuses. An offer without a message is invisible and never handled (tested).
 
-Opties, met de gebruiker gekozen route nog open:
-- **A. Een binnenkomend bod ombouwen** (koper, speler, som) in bod + detailrecord + beide kopieën van het bericht,
-  daarna in FM accepteren → FM doet een echte transfer. Volgende stap: met een vers bod in een test-save alle velden
-  van het bericht en het detailrecord in kaart brengen (op Windows eerst de offsets van het bod controleren:
-  `tools/research/offers.py`).
-- **B. Direct verkopen** (gebouwd, `sell`): betrouwbaar maar zonder bericht/historie.
-- **C. FM zelf laten bieden**: transferlijst + vraagprijs + koper meer budget geven.
+Options, route not chosen yet:
+- **A. Rewrite an incoming offer** (buyer, player, fee) in offer + detail record + both copies of the message, then
+  accept in FM → FM does a real transfer. Next step: with a fresh offer in a test save, map all fields of the message
+  and the detail record (on Windows first verify the offer offsets: `tools/research/offers.py`).
+- **B. Direct sale** (built, `sell`): reliable but without message/history.
+- **C. Let FM bid itself**: transfer list + asking price + give the buyer more budget.
 
-FM27 gebruikt nepnamen voor clubs zonder licentie: AC Milan = **Casciavit Milano** (UID 1099), Inter =
-**Blu-neri Milano** (UID 1135). Handig voor het zoekveld in de app (aliassen?).
+FM27 uses fake names for unlicensed clubs: AC Milan = **Casciavit Milano** (UID 1099), Inter =
+**Blu-neri Milano** (UID 1135). Useful for the app's search field (aliases?).
 
-## Schermuitlezing (Breakdown) op Windows, gemeten 8 nov 2026
+## Screen reading (Breakdown) on Windows, measured 8 Nov 2026
 
-- Elke taartmeter heeft **10 segmenten**, gevuld met de klok mee vanaf 12 uur; het lege deel is **bijna wit**
-  (s < 0,25, v > 0,66), de spaken zijn ook licht, de achtergrond van een gemarkeerde rij is middelgrijs
-  (s ≈ 0,12, v ≈ 0,34) en viel vroeger onder "meter-grijs". De score is nu het aantal gevulde segmenten × 10
-  (laatste echt gekleurde sector, afgerond op een segment); de tint (oranje laag, geel midden, groen hoog) wordt
-  alleen bewaard. Balken: 11 plekken, één gekleurde (de stand) en één witte streep; stand = plek vanaf het
-  eerste streepje / 10. De doorschijnende paneelachtergrond kan een deel van de streepjes in ruis zetten.
-- Windows-OCR leest "Player Buy-In" als "Player Buy-ln" (alias in `model.rs`).
-- **Sinds 9 nov 2026** (melding: "Build Up-ring niet half vol, app zegt 70"): een taart wordt uitgesneden als de
-  aaneengesloten rijen rond het midden van het label (een buurmeter in de zoekband telt niet meer mee; met grotere
-  tekst, tekst/rij ≥ 0,7, las de oude code 7 segmenten als 80 of 50), alleen pixels in de tint van de vulling tellen
-  (meest voorkomende tint in de binnenring, ±25°), en FM's kleur is een controle: 20–40 % oranje (~43°), 50–70 % geel
-  (~60°), 90 % groen (~120°), 40 % was bij Ajax geel. Valt een meting buiten de band van zijn kleur, dan wordt hij
-  naar de rand gezet en gemarkeerd (`GaugeReading.doubt`; de app vraagt de gebruiker hem na te kijken). Tests:
-  `pies_on_any_background`, `pies_in_tight_rows` in `vision.rs`. Op Sem's eigen opnames (Ajax, Sunderland) lazen oud
-  en nieuw alles goed, ook verkleind tot 1366×768: de opname van de gebruiker is nooit gezien. Vraag bij een nieuwe
-  melding om `last-breakdown.png` (Instellingen → "Open app-map").
-- **Resolutie-onafhankelijk sinds 8 nov 2026** (melding van een gebruiker: "Read 8 of 17 gauges", key factors
-  op 0 of 50): `analyze_image` leest eerst op ware grootte en, als de labels niet ~20 px hoog zijn (`REF_TEXT`,
-  de maat van 2560×1440 op 100 %), nog eens op een kopie die naar die maat is geschaald (zonder enig herkend
-  label: 1,5× en 2×); de meting op de referentiemaat wint bij gelijke stand. Verder: labels worden tolerant
-  gematcht (Levenshtein, ~1 letter per 6), een gemist label krijgt zijn rij uit de rij-afstand en de
-  meterkolom van de gevonden labels, en een kolom zonder enig label uit de kop "Key Factors" (eerste rij
-  2,15 × kophoogte eronder, meter = laatste ronde blok op de rij). Elke taartmeter wordt vóór het meten naar
-  72 px gebracht; de vulling is de aaneengesloten reeks gekleurde sectoren vanaf 12 uur (één sector gat =
-  spaak). De balkmeters worden gelezen als helderheidspieken (streepjes) met de kaderrand eruit (kolommen die
-  over meer dan 60 % van de hoogte licht zijn); de stand = plek van de gekleurde streep tussen eerste en laatste
-  streepje × 10. Getest door `last-breakdown.png` met Pillow te verkleinen naar 3840×2160 … 1280×720: alle 21
-  waarden gelijk van 1366×768 tot 4K; op 720p (sterk vervaagd) 15 van 17. `FM27_VISION_DEBUG=1` print de
-  balkmeting.
-- **Sinds 9 nov 2026 (avond, versie 0.2.4)**, na "nog steeds 8 van 17, eerste 8 op 0, balken
-  90/100/100/80" en "leest helemaal niets, moet FM in het Engels?": de labels van alle FM-talen (Arabisch niet;
-  US English heeft "Coaching Support" en "Head Coach Tendencies"), matching op alleen letters (spaties/accenten
-  eruit, CJK-OCR heeft geen spaties), titels eerst (Duits: Player Ability = Player Capability = "Spielerfähigkeit"),
-  een label is minstens de helft van zijn regel. Een taart moet een dichte, ronde schijf zijn (een letter "Q" of
-  het icoon vóór het label werd als lege meter = 0 gelezen); 0 wordt altijd gemarkeerd. Als de OCR de taart als
-  "O" aan het label plakt, komt het label-einde uit de mediane letterbreedte. "Licht" is relatief aan de
-  achtergrond (op een donkere opname stond elke balk op 90–100 doordat de kaderrand als streepje telde; nu
-  telt de regelmaat van de streepjes); "gekleurd" moet ook 0,2 lichter zijn dan de achtergrond, en minder
-  verzadigde pixels in de tint van de vulling tellen mee (flets HDR). Een balk wordt ook gelezen als zijn titel
-  niet herkend is (op de rij van de andere titels, in het eigen paneel). De opname neemt op Windows het venster
-  van fm.exe (op pid), nooit een browser (die met een FM-pagina open even groot kan zijn). De OCR valt terug op
-  andere talen (Windows: geïnstalleerde OCR-talen; Mac: Vision's talen via `recognitionLanguages`, niet live
-  getest). Elke uitlezing schrijft `last-analysis.txt`; de app vraagt erom bij een onvolledige uitlezing.
-  Getest met `tools/research/vision_regress.py` op Sem's opname: 18 van 18 varianten goed (0.2.3 las van een
-  bredere set van 27 er 7 goed, 0.2.4 23). De echte opname van de melders is nog steeds niet gezien: of dit hun
-  oorzaak was, is niet bevestigd.
-- Elke uitlezing bewaart `last-capture.png`, `last-analysis.txt` en, als er een Breakdown op stond,
-  `last-breakdown.png` in `%APPDATA%\FM27 Trainer`; naspelen met `target\debug\fm27-trainer.exe analyze <png> --ocr`
-  (die uitvoer is gelijk aan `last-analysis.txt`). Hulpscripts om
-  pixels te bekijken stonden in de scratchpad van de sessie (pie_debug.py, montage.py); zo nodig opnieuw maken
-  met Pillow (`python -m pip install --user pillow`).
+- Each pie gauge has **10 segments**, filled clockwise from 12 o'clock; the empty part is **almost white**
+  (s < 0.25, v > 0.66), the spokes are light too, the background of a highlighted row is mid-grey
+  (s ≈ 0.12, v ≈ 0.34) and used to fall under "gauge grey". The score is now filled segments × 10 (last truly
+  coloured sector, rounded to a segment); the hue (orange low, yellow mid, green high) is kept only. Bars: 11
+  positions, one coloured (the value) and one white tick; value = position from the first tick / 10. The
+  translucent panel background can drown some ticks in noise.
+- Windows OCR reads "Player Buy-In" as "Player Buy-ln" (alias in `model.rs`).
+- **Since 9 Nov 2026** (report: "Build Up ring not half full, app says 70"): a pie is cut out as the contiguous rows
+  around the middle of the label (a neighbouring gauge in the search band no longer counts; with larger text,
+  text/row ≥ 0.7, the old code read 7 segments as 80 or 50), only pixels in the fill hue count (most common hue in
+  the inner ring, ±25°), and FM's colour is a check: 20–40 % orange (~43°), 50–70 % yellow (~60°), 90 % green
+  (~120°), 40 % was yellow at Ajax. If a reading falls outside its colour's band it is clamped to the edge and
+  flagged (`GaugeReading.doubt`; the app asks the user to check it). Tests: `pies_on_any_background`,
+  `pies_in_tight_rows` in `vision.rs`. On the original author's captures (Ajax, Sunderland) old and new read
+  everything correctly, also scaled down to 1366×768; the reporting user's capture was never seen. On a new report,
+  ask for `last-breakdown.png` (Settings → "Open app folder").
+- **Resolution-independent since 8 Nov 2026** (report: "Read 8 of 17 gauges", key factors at 0 or 50):
+  `analyze_image` first reads at true size and, if labels aren't ~20 px high (`REF_TEXT`, the size at 2560×1440 at
+  100 %), again on a copy scaled to that size (with no label recognised: 1.5× and 2×); the reference-size reading
+  wins on a tie. Further: labels are matched tolerantly (Levenshtein, ~1 letter per 6), a missed label gets its row
+  from the row spacing and the gauge column of the found labels, and a column with no label at all from the "Key
+  Factors" header (first row 2.15 × header height below it, gauge = last round blob on the row). Every pie gauge is
+  scaled to 72 px before measuring; the fill is the contiguous run of coloured sectors from 12 o'clock (one-sector
+  gap = spoke). Bar gauges are read as brightness peaks (ticks) with the frame edge removed (columns light over more
+  than 60 % of the height); value = position of the coloured tick between first and last tick × 10. Tested by
+  scaling `last-breakdown.png` with Pillow to 3840×2160 … 1280×720: all 21 values equal from 1366×768 to 4K; at
+  720p (very blurry) 15 of 17. `FM27_VISION_DEBUG=1` prints the bar measurement.
+- **Since 9 Nov 2026 (evening, version 0.2.4)**, after "still 8 of 17, first 8 at 0, bars 90/100/100/80" and
+  "reads nothing at all, does FM have to be in English?": labels in all FM languages (not Arabic; US English has
+  "Coaching Support" and "Head Coach Tendencies"), matching on letters only (spaces/accents stripped, CJK OCR has no
+  spaces), titles first (German: Player Ability = Player Capability = "Spielerfähigkeit"), a label is at least half
+  its line. A pie must be a dense, round disc (a letter "Q" or the icon before the label was read as an empty gauge
+  = 0); 0 is always flagged. If OCR glues the pie to the label as "O", the label end comes from the median letter
+  width. "Light" is relative to the background (on a dark capture every bar read 90–100 because the frame edge
+  counted as a tick; now the regularity of the ticks counts); "coloured" must also be 0.2 lighter than the
+  background, and less saturated pixels in the fill hue count too (washed-out HDR). A bar is also read if its title
+  isn't recognised (on the row of the other titles, in its own panel). On Windows the capture takes the fm.exe
+  window (by pid), never a browser (which can be the same size with an FM page open). OCR falls back to other
+  languages (Windows: installed OCR languages; Mac: Vision's languages via `recognitionLanguages`, not live-tested).
+  Every reading writes `last-analysis.txt`; the app asks for it on an incomplete reading. Tested with
+  `tools/research/vision_regress.py` on the original author's capture: 18 of 18 variants correct (0.2.3 got 7 of a
+  wider set of 27 right, 0.2.4 got 23). The reporters' actual capture still hasn't been seen: whether this was
+  their cause is unconfirmed.
+- Every reading saves `last-capture.png`, `last-analysis.txt` and, if a Breakdown was on screen,
+  `last-breakdown.png` in `%APPDATA%\FM27 Trainer`; replay with `target\debug\fm27-trainer.exe analyze <png> --ocr`
+  (that output equals `last-analysis.txt`). Pixel-inspection helper scripts (pie_debug.py, montage.py) were not kept;
+  recreate with Pillow if needed (`python -m pip install --user pillow`).
 
-## Overig
+## Other
 
-- Ondertekenen Mac: Developer ID "Sem Hiel (SFV4V5SHM4)", notarytool-profiel `fm27-notary` (alleen op de Mac).
-- De Windows-exe is niet ondertekend (SmartScreen: "Meer info → Toch uitvoeren").
-- Testhulpen GUI: `FM27_PAGE=training|planning|club|squad|sell|settings`, `FM27_LANG=nl|en`,
-  `FM27_SNAPSHOT=pad.png` (schermafbeelding van het eigen venster, dan afsluiten), `FM27_WINDOW=1320x1000`.
-  Met `FM27_SNAPSHOT` slaat de app het automatisch bijhouden van training over (sinds 8 nov 2026): een testopname
-  schrijft nooit in FM. Zonder die variabele schrijft een gestarte app met "automatisch bijhouden" aan binnen
-  enkele seconden het trainingsplan in FM; houd daar rekening mee bij tests tegen een echte save.
+- The Windows exe is not signed (SmartScreen: "More info → Run anyway").
+- GUI test helpers: `FM27_PAGE=training|planning|club|squad|sell|settings`, `FM27_LANG=nl|en`,
+  `FM27_SNAPSHOT=path.png` (screenshot of its own window, then quit), `FM27_WINDOW=1320x1000`.
+  With `FM27_SNAPSHOT` the app skips automatic training upkeep (since 8 Nov 2026): a test capture never writes to
+  FM. Without that variable, a started app with "keep on plan automatically" on writes the training plan into FM
+  within seconds; keep that in mind when testing against a real save.
